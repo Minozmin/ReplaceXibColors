@@ -5,7 +5,23 @@ import xml.dom.minidom
 
 # https://docs.python.org/3/library/xml.dom.html#node-objects
 
+# 字符串转字典
+def stringMapToDict(colorStr):
+    colorStr = colorStr.replace('<color ', '')
+    colorStr = colorStr.replace('/>', '')
+    colorStr = colorStr.replace('"', '')
+    colorList = colorStr.split(' ')
+    colorDict = {}
+    for item in colorList:
+        nItem = item.split('=')
+        if len(nItem) > 1:
+            colorDict[nItem[0]] = nItem[1]
+
+    return colorDict
+
 path = '/Users/litb/Desktop/write_test.xml'
+oldDict = stringMapToDict('<color key="backgroundColor" red="0.89019607840000003" green="0.19215686269999999" blue="0.14117647059999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>')
+newDict = stringMapToDict('<color key="backgroundColor" name="primary"/>')
 # path = '/Users/litb/Desktop/TestColor/TestColor/Base.lproj/Main.storyboard'
 
 # 移除缩进和换行符，后面写入的时候统一添加格式
@@ -28,14 +44,18 @@ root = dom.documentElement
 def replaceColorNode():
     colors = root.getElementsByTagName('color')
     for color in colors:
-        if color.getAttribute('red') == '0.0':
-            color.parentNode.replaceChild(replaceColor, color)
+        if color.getAttribute('key') == oldDict['key'] and color.getAttribute('red') == oldDict['red'] and color.getAttribute('green') == oldDict['green'] and color.getAttribute('alpha') == oldDict['alpha']:
+            color.parentNode.replaceChild(replaceColor(), color)
+            return True
+        
+    return False
 
 # 替换color
 def replaceColor():
     newColor = dom.createElement('color')
-    newColor.setAttribute('key', 'backgroundColor')
-    newColor.setAttribute('name', 'primary')
+    
+    for key, value in newDict.items():
+        newColor.setAttribute(key, value)
 
     return newColor
 
@@ -71,10 +91,14 @@ def insertResourceNode():
         resourcesNode.appendChild(namedColorNode)
         root.appendChild(resourcesNode)
 
-insertResourceNode()
-replaceColorNode()
+isUpdate = replaceColorNode()
 
-# Python DOM 写入XML
-with open(path, 'w', encoding='UTF-8') as writer:
-    # https://docs.python.org/zh-cn/3.9/library/xml.dom.minidom.html
-    dom.writexml(writer, indent='', addindent='    ', newl='\n', encoding='UTF-8')
+if isUpdate:
+    if 'name' in newDict.keys():
+        print('包含')
+        insertResourceNode()
+    
+    # Python DOM 写入XML
+    with open(path, 'w', encoding='UTF-8') as writer:
+        # https://docs.python.org/zh-cn/3.9/library/xml.dom.minidom.html
+        dom.writexml(writer, indent='', addindent='    ', newl='\n', encoding='UTF-8')
