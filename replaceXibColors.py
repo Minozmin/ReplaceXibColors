@@ -5,10 +5,18 @@ import xml.dom.minidom
 
 # https://docs.python.org/3/library/xml.dom.html#node-objects
 
+ # 将字典转化为类对象
+class DictToObject:
+    def __init__(self, dictionary):
+        for key, value in dictionary.items():
+            isinstance
+            if isinstance(value, dict):
+                setattr(self, key, DictToObject(value))
+            else:
+                setattr(self, key, value)
+
 # 字符串转字典
 def stringMapToDict(colorStr):
-    colorStr = colorStr.replace('<color ', '')
-    colorStr = colorStr.replace('/>', '')
     colorStr = colorStr.replace('"', '')
     colorList = colorStr.split(' ')
     colorDict = {}
@@ -20,9 +28,19 @@ def stringMapToDict(colorStr):
     return colorDict
 
 path = '/Users/litb/Desktop/write_test.xml'
-oldDict = stringMapToDict('<color key="backgroundColor" red="0.89019607840000003" green="0.19215686269999999" blue="0.14117647059999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>')
-newDict = stringMapToDict('<color key="backgroundColor" name="primary"/>')
 # path = '/Users/litb/Desktop/TestColor/TestColor/Base.lproj/Main.storyboard'
+
+#获取命令行上的参数：参数1是旧的颜色字符串rgba，参数2是新的颜色字符串name
+oldColoStr = 'red="0.89019607840000003" green="0.19215686269999999" blue="0.14117647059999999" alpha="1"'
+newColorStr = 'name="primary"'
+if len(sys.argv) > 1:
+    oldColoStr = sys.argv[1]
+
+if len(sys.argv) > 2:
+    newColorStr = sys.argv[2]
+
+oldColorObj = DictToObject(stringMapToDict(oldColoStr))
+newColorDict = stringMapToDict(newColorStr)
 
 # 移除缩进和换行符，后面写入的时候统一添加格式
 def removeEnterAndSpace():
@@ -44,17 +62,18 @@ root = dom.documentElement
 def replaceColorNode():
     colors = root.getElementsByTagName('color')
     for color in colors:
-        if color.getAttribute('key') == oldDict['key'] and color.getAttribute('red') == oldDict['red'] and color.getAttribute('green') == oldDict['green'] and color.getAttribute('alpha') == oldDict['alpha']:
-            color.parentNode.replaceChild(replaceColor(), color)
+        colorKey = color.getAttribute('key')
+        if colorKey and color.getAttribute('red') == oldColorObj.red and color.getAttribute('green') == oldColorObj.green and color.getAttribute('blue') == oldColorObj.blue and color.getAttribute('alpha') == oldColorObj.alpha:
+            color.parentNode.replaceChild(replaceColor(colorKey), color)
             return True
         
     return False
 
 # 替换color
-def replaceColor():
+def replaceColor(colorKey):
     newColor = dom.createElement('color')
-    
-    for key, value in newDict.items():
+    newColor.setAttribute('key', colorKey)
+    for key, value in newColorDict.items():
         newColor.setAttribute(key, value)
 
     return newColor
@@ -62,10 +81,10 @@ def replaceColor():
 # 插入颜色节点
 def insertColorNode():
     insertColorNode = dom.createElement('color')
-    insertColorNode.setAttribute('red', '0.1')
-    insertColorNode.setAttribute('green', '0.19607843137254902')
-    insertColorNode.setAttribute('blue', '0.078431372549019607')
-    insertColorNode.setAttribute('alpha', '1')
+    insertColorNode.setAttribute('red', oldColorObj.red)
+    insertColorNode.setAttribute('green', oldColorObj.green)
+    insertColorNode.setAttribute('blue', oldColorObj.blue)
+    insertColorNode.setAttribute('alpha', oldColorObj.alpha)
     insertColorNode.setAttribute('colorSpace', 'custom')
     insertColorNode.setAttribute('customColorSpace', 'sRGB')
     return insertColorNode
@@ -93,12 +112,10 @@ def insertResourceNode():
 
 isUpdate = replaceColorNode()
 
-if isUpdate:
-    if 'name' in newDict.keys():
-        print('包含')
-        insertResourceNode()
-    
-    # Python DOM 写入XML
-    with open(path, 'w', encoding='UTF-8') as writer:
-        # https://docs.python.org/zh-cn/3.9/library/xml.dom.minidom.html
-        dom.writexml(writer, indent='', addindent='    ', newl='\n', encoding='UTF-8')
+if isUpdate and 'name' in newColorDict.keys():
+    insertResourceNode()
+
+# Python DOM 写入XML
+with open(path, 'w', encoding='UTF-8') as writer:
+    # https://docs.python.org/zh-cn/3.9/library/xml.dom.minidom.html
+    dom.writexml(writer, indent='', addindent='    ', newl='\n', encoding='UTF-8')
