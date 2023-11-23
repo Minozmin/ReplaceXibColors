@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 import os
 from xml.dom.minidom import parse
@@ -41,6 +43,7 @@ if len(sys.argv) > 2:
 
 oldColorObj = DictToObject(stringMapToDict(oldColoStr))
 newColorDict = stringMapToDict(newColorStr)
+newColorObj = DictToObject(newColorDict)
 
 # 移除缩进和换行符，后面写入的时候统一添加格式
 def removeEnterAndSpace():
@@ -100,11 +103,14 @@ def insertNamedColorNode(name):
 # 插入color命名空间代码
 def insertResourceNode():
     resources = 'resources'
-    namedColorNode = insertNamedColorNode('primary')
+    namedColorNode = insertNamedColorNode(newColorObj.name)
     if root.getElementsByTagName(resources):
         for node in root.childNodes:
             if node.nodeName == resources:
-                node.appendChild(namedColorNode)
+                for subNode in node.childNodes:
+                    if subNode.getAttribute('name') != newColorObj.name:
+                        node.appendChild(namedColorNode)
+                        return
     else:
         resourcesNode = dom.createElement('resources')
         resourcesNode.appendChild(namedColorNode)
