@@ -7,6 +7,23 @@ import xml.dom.minidom
 
 # https://docs.python.org/3/library/xml.dom.html#node-objects
 
+if sys.version < '3':
+    print('必须使用python3, 当前版本是: ' + sys.version)
+    sys.exit(0)
+
+if len(sys.argv) < 4:
+    print('必须输入4个参数: 第1个是脚本路径, 第2个是需要替换的文件路径, 第3个是旧颜色字符串(rgba值), 第4个是新颜色字符串(颜色命名空间: name)')
+    sys.exit(0)
+
+#获取命令行的参数：参数2是文件路径，参数3是旧的颜色字符串rgba，参数4是新的颜色字符串name
+path = path = sys.argv[1]
+oldColoStr = sys.argv[2]
+newColorStr = sys.argv[3]
+
+if not (path.endswith('.xib') or path.endswith('.storyboard')):
+    print('第2个参数路径必须是.xib或.storyboard结尾的文件')
+    sys.exit(0)
+
  # 将字典转化为类对象
 class DictToObject:
     def __init__(self, dictionary):
@@ -29,19 +46,9 @@ def stringMapToDict(colorStr):
 
     return colorDict
 
-path = '/Users/litb/Desktop/write_test.xml'
-# path = '/Users/litb/Desktop/TestColor/TestColor/Base.lproj/Main.storyboard'
-
-#获取命令行上的参数：参数1是旧的颜色字符串rgba，参数2是新的颜色字符串name
-oldColoStr = 'red="0.89019607840000003" green="0.19215686269999999" blue="0.14117647059999999" alpha="1"'
-newColorStr = 'name="primary"'
-if len(sys.argv) > 1:
-    oldColoStr = sys.argv[1]
-
-if len(sys.argv) > 2:
-    newColorStr = sys.argv[2]
-
+# 第3个参数：旧颜色对象
 oldColorObj = DictToObject(stringMapToDict(oldColoStr))
+# 第4个参数：新颜色字典和对象
 newColorDict = stringMapToDict(newColorStr)
 newColorObj = DictToObject(newColorDict)
 
